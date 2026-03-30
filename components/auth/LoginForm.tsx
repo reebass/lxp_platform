@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { User, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
 // Импортируем наши UI компоненты
@@ -53,6 +53,7 @@ export default function LoginForm({ isTenantMode = false }: { isTenantMode?: boo
     setIsLoading(true);
 
     try {
+      const supabase = createClient();
       // Вызываем trim() перед отправкой
       const trimmedEmail = email.trim();
 

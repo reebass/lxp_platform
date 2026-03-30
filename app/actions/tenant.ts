@@ -167,12 +167,15 @@ export async function updateTenantSubscription(tenantId: string, formData: FormD
   // trial_ends_at: пустая строка (пользователь очистил поле) → null (убираем дату из БД).
   // Непустая строка — ISO-дата в формате YYYY-MM-DD, Supabase принимает и хранит как timestamptz.
   const trial_ends_at = orNull(formData.get('trial_ends_at'));
+  // storage_limit_mb: ліміт сховища в мегабайтах. Якщо не вказано — беремо 1024 (1 ГБ за замовчуванням).
+  const rawStorage = (formData.get('storage_limit_mb') as string)?.trim();
+  const storage_limit_mb = rawStorage === '' || !rawStorage ? 1024 : parseInt(rawStorage, 10) || 1024;
 
   const supabase = await createClient();
 
   const { error } = await supabase
     .from('tenants')
-    .update({ subscription_status, subscription_plan, max_users, trial_ends_at })
+    .update({ subscription_status, subscription_plan, max_users, trial_ends_at, storage_limit_mb })
     .eq('id', tenantId);
 
   if (error) {

@@ -46,9 +46,10 @@ export function SubscriptionForm({ tenant }: { tenant: any }) {
     subscription_plan: tenant.subscription_plan || 'Free',
     max_users: tenant.max_users != null ? String(tenant.max_users) : '',
     trial_ends_at: formatDateForInput(tenant.trial_ends_at),
+    storage_limit_mb: String(tenant.storage_limit_mb ?? 1024),
   });
 
-  // СИНХРОНИЗАЦІЯ ПРОПА → СТЕЙТА (useEffect):
+  // СИНХРОНІЗАЦІЯ ПРОПА → СТЕЙТА (useEffect):
   // Після Server Action + revalidatePath Next.js передає оновлений `tenant` проп.
   // useState ігнорує це оновлення — useEffect виправляє: синхронізує стейт
   // з новими даними з БД і автоматично ховає кнопку «Зберегти».
@@ -58,6 +59,7 @@ export function SubscriptionForm({ tenant }: { tenant: any }) {
       subscription_plan: tenant.subscription_plan || 'Free',
       max_users: tenant.max_users != null ? String(tenant.max_users) : '',
       trial_ends_at: formatDateForInput(tenant.trial_ends_at),
+      storage_limit_mb: String(tenant.storage_limit_mb ?? 1024),
     });
   }, [tenant]);
 
@@ -67,7 +69,8 @@ export function SubscriptionForm({ tenant }: { tenant: any }) {
     formData.subscription_status !== (tenant.subscription_status || 'Active') ||
     formData.subscription_plan !== (tenant.subscription_plan || 'Free') ||
     formData.max_users !== (tenant.max_users != null ? String(tenant.max_users) : '') ||
-    formData.trial_ends_at !== formatDateForInput(tenant.trial_ends_at);
+    formData.trial_ends_at !== formatDateForInput(tenant.trial_ends_at) ||
+    formData.storage_limit_mb !== String(tenant.storage_limit_mb ?? 1024);
 
   const updateAction = updateTenantSubscription.bind(null, tenant.id);
 
@@ -144,14 +147,6 @@ export function SubscriptionForm({ tenant }: { tenant: any }) {
           <label className="text-muted-foreground font-medium text-sm">
             Кінець пробного періоду
           </label>
-          {/* 
-            Нативний HTML інпут типу 'date' вимагає формат YYYY-MM-DD.
-            Ми використовуємо значення з formData.trial_ends_at, яке вже було 
-            оброблене хелпером formatDateForInput для коректного відображення.
-
-            ИНЛАЙН-ХАК: colorScheme: 'dark' заставляет браузер рендерить нативный календарь в темной теме.
-            invert() делает темную иконку календаря светлой под наш Cyberpunk дизайн.
-          */}
           <input
             type="date"
             name="trial_ends_at"
@@ -160,6 +155,25 @@ export function SubscriptionForm({ tenant }: { tenant: any }) {
             className={`${INPUT_BASE} cursor-text [&::-webkit-calendar-picker-indicator]:opacity-70 hover:[&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:cursor-pointer`}
             style={{ colorScheme: 'dark' }}
           />
+        </div>
+
+        {/* Ліміт сховища: пресети в МБ, відображаємо як зрозумілі ГБ/МБ */}
+        <div className="space-y-1">
+          <label className="text-muted-foreground font-medium text-sm flex items-center gap-2">
+            Ліміт сховища
+          </label>
+          <select
+            name="storage_limit_mb"
+            value={formData.storage_limit_mb}
+            onChange={(e) => setFormData({ ...formData, storage_limit_mb: e.target.value })}
+            className={SELECT_CLASS}
+          >
+            <option value="512">512 MB</option>
+            <option value="1024">1 GB</option>
+            <option value="5120">5 GB</option>
+            <option value="10240">10 GB</option>
+            <option value="51200">50 GB</option>
+          </select>
         </div>
 
         {/* Кнопка ЗАВЖДИ в DOM (invisible, не conditional) — нет layout shift.

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
 
 interface LogoutButtonProps {
@@ -13,6 +13,7 @@ export const LogoutButton: React.FC<LogoutButtonProps> = ({ label }) => {
   const router = useRouter();
 
   const handleLogout = async () => {
+    const supabase = createClient();
     // Выход из системы с использованием Supabase Client.
     // Метод signOut() удаляет текущую сессию пользователя (очищает куки/локальное хранилище).
     await supabase.auth.signOut();
