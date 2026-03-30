@@ -12,9 +12,11 @@ interface UploadZoneProps {
   onClose?: () => void;
   /** Pre-seed a file that was dropped globally before the modal opened */
   initialFile?: File | null;
+  /** Target folder for the upload — null means root */
+  currentFolderId?: string | null;
 }
 
-export const UploadZone = ({ tenantId, onClose, initialFile }: UploadZoneProps) => {
+export const UploadZone = ({ tenantId, onClose, initialFile, currentFolderId = null }: UploadZoneProps) => {
   const [isHovering, setIsHovering] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
@@ -102,7 +104,6 @@ export const UploadZone = ({ tenantId, onClose, initialFile }: UploadZoneProps) 
 
       if (uploadError) throw new Error(`Storage: ${uploadError.message}`);
 
-      // 2. Insert into Database
       const { error: dbError } = await supabase
         .from('documents')
         .insert({
@@ -111,6 +112,7 @@ export const UploadZone = ({ tenantId, onClose, initialFile }: UploadZoneProps) 
           size_bytes: pendingFile.size,
           file_path: storageData.path,
           status: 'ready',
+          parent_id: currentFolderId ?? null,
         });
 
       if (dbError) {

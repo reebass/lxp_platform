@@ -7,12 +7,19 @@ import { DocumentTable } from './_components/DocumentTable';
 
 export default async function DataHubPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ domain: string }>;
+  searchParams: Promise<{ folder?: string }>;
 }) {
   const resolvedParams = await params;
+  const resolvedSearch = await searchParams;
+
   const rawDomain = decodeURIComponent(resolvedParams.domain);
   const cleanDomain = rawDomain.replace('.localhost', '');
+
+  // currentFolderId drives both the DocumentTable query and the upload target
+  const currentFolderId = resolvedSearch.folder ?? null;
 
   const supabase = await createClient();
 
@@ -28,9 +35,7 @@ export default async function DataHubPage({
 
   const dynamicStyles: Record<string, string> = {};
   const assignColor = (cssVar: string, dbHexValue: string | null) => {
-    if (dbHexValue) {
-      dynamicStyles[cssVar] = hexToHsl(dbHexValue);
-    }
+    if (dbHexValue) dynamicStyles[cssVar] = hexToHsl(dbHexValue);
   };
 
   assignColor('--background', tenant.color_content);
@@ -42,8 +47,16 @@ export default async function DataHubPage({
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6 md:px-6 md:py-10 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <DataHubClient tenantId={tenant.id} dynamicStyles={dynamicStyles}>
-        <DocumentTable tenantId={tenant.id} storageLimitMb={tenant.storage_limit_mb ?? 1024} />
+      <DataHubClient
+        tenantId={tenant.id}
+        dynamicStyles={dynamicStyles}
+        currentFolderId={currentFolderId}
+      >
+        <DocumentTable
+          tenantId={tenant.id}
+          storageLimitMb={tenant.storage_limit_mb ?? 1024}
+          currentFolderId={currentFolderId}
+        />
       </DataHubClient>
     </div>
   );

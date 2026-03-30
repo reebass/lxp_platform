@@ -17,9 +17,17 @@ interface UploadModalProps {
   tenantId: string;
   dynamicStyles: Record<string, string>;
   initialFile?: File | null;
+  currentFolderId?: string | null;
 }
 
-export const UploadModal = ({ open, onOpenChange, tenantId, dynamicStyles, initialFile }: UploadModalProps) => {
+export const UploadModal = ({
+  open,
+  onOpenChange,
+  tenantId,
+  dynamicStyles,
+  initialFile,
+  currentFolderId = null,
+}: UploadModalProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent style={dynamicStyles as React.CSSProperties} className="max-w-lg bg-background-content text-foreground">
@@ -39,6 +47,7 @@ export const UploadModal = ({ open, onOpenChange, tenantId, dynamicStyles, initi
           <UploadZone
             tenantId={tenantId}
             initialFile={initialFile}
+            currentFolderId={currentFolderId}
             onClose={() => onOpenChange(false)}
           />
         </div>

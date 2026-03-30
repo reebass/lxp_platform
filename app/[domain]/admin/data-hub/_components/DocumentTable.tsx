@@ -1,23 +1,9 @@
 import React from 'react';
 import { createClient } from '@/lib/supabase/server';
-import {
-  FileText,
-  Trash2,
-  CheckCircle2,
-  Clock,
-  Database,
-} from 'lucide-react';
+import { Database } from 'lucide-react';
 import { TableToolbar } from './TableToolbar';
-
-// ── Types ────────────────────────────────────────────────────────────────────
-interface Document {
-  id: string;
-  name: string;
-  size_bytes: number;
-  file_path: string;
-  status: string;
-  created_at: string;
-}
+import { FileRow, type DocItem } from './FileRow';
+import { Breadcrumbs } from './Breadcrumbs';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 function formatBytes(bytes: number): string {
@@ -27,38 +13,57 @@ function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 }
 
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('uk-UA', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  });
-}
-
 // ── Component ─────────────────────────────────────────────────────────────────
-export const DocumentTable = async ({ tenantId, storageLimitMb }: { tenantId: string; storageLimitMb: number }) => {
+export const DocumentTable = async ({
+  tenantId,
+  storageLimitMb,
+  currentFolderId = null,
+}: {
+  tenantId: string;
+  storageLimitMb: number;
+  currentFolderId?: string | null;
+}) => {
   const supabase = await createClient();
-  // Конвертуємо ліміт зі сховища (в МБ) у байти для розрахунку відсотків.
   const storageLimitBytes = storageLimitMb * 1024 * 1024;
 
-  const { data: documents, error } = await supabase
+  // Fetch items in the current folder, folders sorted first then by date
+  const baseQuery = supabase
     .from('documents')
-    .select('id, name, size_bytes, file_path, status, created_at')
-    .eq('tenant_id', tenantId)
-    .order('created_at', { ascending: false });
+    .select('id, name, size_bytes, file_path, status, created_at, is_folder, parent_id')
+    .eq('tenant_id', tenantId);
 
-  const docs: Document[] = documents ?? [];
-  const totalBytes = docs.reduce((sum, d) => sum + (d.size_bytes ?? 0), 0);
+  const { data: documents, error } = currentFolderId
+    ? await baseQuery
+        .eq('parent_id', currentFolderId)
+        .order('is_folder', { ascending: false })
+        .order('created_at', { ascending: false })
+    : await baseQuery
+        .is('parent_id', null)
+        .order('is_folder', { ascending: false })
+        .order('created_at', { ascending: false });
+
+  const docs: DocItem[] = documents ?? [];
+  const folders = docs.filter((d) => d.is_folder);
+  const files = docs.filter((d) => !d.is_folder);
+  const totalBytes = files.reduce((sum, d) => sum + (d.size_bytes ?? 0), 0);
   const usagePercent = Math.min((totalBytes / storageLimitBytes) * 100, 100);
 
   return (
     <div className="space-y-4">
+      {/* ── Breadcrumbs (Server Component — fetches ancestor chain) ── */}
+      <Breadcrumbs currentFolderId={currentFolderId} />
+
       {/* ── Section header ── */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-2">
         <h3 className="text-xl font-semibold text-foreground flex items-center gap-2">
           Реєстр документів
+          {folders.length > 0 && (
+            <span className="bg-primary/10 text-primary text-[10px] py-0.5 px-2 rounded-full border border-primary/20">
+              {folders.length} ПАПОК
+            </span>
+          )}
           <span className="bg-primary/10 text-primary text-[10px] py-0.5 px-2 rounded-full border border-primary/20">
-            {docs.length} ФАЙЛІВ
+            {files.length} ФАЙЛІВ
           </span>
         </h3>
         <div className="flex items-center gap-2">
@@ -69,7 +74,8 @@ export const DocumentTable = async ({ tenantId, storageLimitMb }: { tenantId: st
         </div>
       </div>
 
-      <TableToolbar />
+      {/* TableToolbar is a Client Component — needs tenantId and currentFolderId */}
+      <TableToolbar tenantId={tenantId} currentFolderId={currentFolderId} />
 
       {/* ── Table ── */}
       <div className="rounded-xl border border-border/60 bg-background-content/30 backdrop-blur-sm overflow-hidden shadow-2xl shadow-black/40">
@@ -78,10 +84,10 @@ export const DocumentTable = async ({ tenantId, storageLimitMb }: { tenantId: st
             <thead>
               <tr className="bg-background/40 border-b border-border/40">
                 <th className="px-6 py-4 text-[11px] uppercase tracking-widest font-bold text-muted-foreground">
-                  Назва файлу
+                  Назва
                 </th>
                 <th className="px-6 py-4 text-[11px] uppercase tracking-widest font-bold text-muted-foreground hidden sm:table-cell">
-                  Дата завантаження
+                  Дата
                 </th>
                 <th className="px-6 py-4 text-[11px] uppercase tracking-widest font-bold text-muted-foreground text-center">
                   Статус
@@ -104,61 +110,21 @@ export const DocumentTable = async ({ tenantId, storageLimitMb }: { tenantId: st
                   <td colSpan={4} className="px-6 py-16 text-center">
                     <div className="flex flex-col items-center gap-3 text-muted-foreground">
                       <Database className="w-10 h-10 opacity-20" />
-                      <p className="text-sm">База знань порожня.</p>
-                      <p className="text-xs opacity-60">Натисніть «Додати документ», щоб розпочати.</p>
+                      <p className="text-sm">
+                        {currentFolderId ? 'Ця папка порожня.' : 'База знань порожня.'}
+                      </p>
+                      <p className="text-xs opacity-60">
+                        {currentFolderId
+                          ? 'Натисніть «Додати документ» або «Нова папка».'
+                          : 'Натисніть «Додати документ», щоб розпочати.'}
+                      </p>
                     </div>
                   </td>
                 </tr>
               )}
+              {/* FileRow is a Client Component — handles inline edit, dropdown, delete confirm */}
               {docs.map((doc) => (
-                <tr key={doc.id} className="hover:bg-primary/[0.03] transition-colors group">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-4">
-                      <div className="relative shrink-0">
-                        <div className="absolute -inset-1 bg-primary/20 rounded opacity-0 group-hover:opacity-100 transition-opacity blur-sm" />
-                        <div className="relative p-2 rounded-lg bg-background-content border border-border/60">
-                          <FileText className="w-5 h-5 text-primary" />
-                        </div>
-                      </div>
-                      <div className="min-w-0">
-                        <div className="text-sm font-medium text-foreground group-hover:text-primary transition-colors truncate max-w-[200px] sm:max-w-xs">
-                          {doc.name}
-                        </div>
-                        <div className="text-[10px] text-muted-foreground uppercase tracking-tight">
-                          {formatBytes(doc.size_bytes)}
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-xs text-muted-foreground font-mono hidden sm:table-cell">
-                    {formatDate(doc.created_at)}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex justify-center">
-                      {doc.status === 'ready' ? (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-success/10 text-success border border-success/20 shadow-[0_0_10px_rgba(57,255,20,0.1)]">
-                          <CheckCircle2 className="w-3 h-3" />
-                          Готово
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-primary/10 text-primary border border-primary/20 animate-pulse">
-                          <Clock className="w-3 h-3" />
-                          Аналіз...
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
-                      <button
-                        className="p-2 text-muted-foreground hover:text-red-400 transition-all hover:bg-red-400/10 rounded-lg"
-                        title="Видалити"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
+                <FileRow key={doc.id} doc={doc} />
               ))}
             </tbody>
           </table>
@@ -169,7 +135,6 @@ export const DocumentTable = async ({ tenantId, storageLimitMb }: { tenantId: st
           <p className="text-[10px] text-muted-foreground italic">
             * Всі завантажені документи шифруються за стандартом AES-256
           </p>
-          {/* Compact storage bar */}
           <div className="flex items-center gap-3 shrink-0">
             <Database className="w-3.5 h-3.5 text-muted-foreground/60 shrink-0" />
             <div className="flex flex-col gap-1 min-w-[160px]">
