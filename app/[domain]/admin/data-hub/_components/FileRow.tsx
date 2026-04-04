@@ -27,8 +27,9 @@ import {
   DialogClose,
 } from '@/components/ui/Dialog';
 import { Button } from '@/components/ui/Button';
-import { renameDocument, deleteDocument } from '../_lib/document-actions';
+import { renameDocument, deleteDocument, moveDocument } from '../_lib/document-actions';
 import { toast } from 'sonner';
+import { dict } from '@/lib/i18n/dictionaries';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 function formatBytes(bytes: number): string {
@@ -62,7 +63,13 @@ export interface DocItem {
 // Client component: handles all per-row interactivity (navigation, rename, delete).
 // Returns a fragment: <tr> + a portalled <Dialog>. The Dialog renders into
 // document.body via RadixUI Portal — no invalid HTML nesting occurs.
-export const FileRow = ({ doc }: { doc: DocItem }) => {
+export const FileRow = ({
+  doc,
+  dynamicStyles,
+}: {
+  doc: DocItem;
+  dynamicStyles: Record<string, string>;
+}) => {
   const router = useRouter();
 
   // ── Inline edit state ────────────────────────────────────────────────────
@@ -74,6 +81,11 @@ export const FileRow = ({ doc }: { doc: DocItem }) => {
   // ── Delete confirm state ─────────────────────────────────────────────────
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // ── Drag & drop state ────────────────────────────────────────────────────
+  const [isDragOver, setIsDragOver] = useState(false);
+
+  const d = dict.uk.dataHub.row;
 
   // ── Edit handlers ─────────────────────────────────────────────────────────
   const startEdit = () => {
@@ -101,11 +113,11 @@ export const FileRow = ({ doc }: { doc: DocItem }) => {
       if (result?.error) {
         toast.error(result.error);
       } else {
-        toast.success('Перейменовано');
+        toast.success(d.renameSuccess);
         router.refresh();
       }
     } catch {
-      toast.error('Не вдалось перейменувати');
+      toast.error(d.renameError);
     } finally {
       setIsSaving(false);
       setIsEditing(false);
@@ -125,11 +137,11 @@ export const FileRow = ({ doc }: { doc: DocItem }) => {
       if (result?.error) {
         toast.error(result.error);
       } else {
-        toast.success(doc.is_folder ? 'Папку видалено' : 'Файл видалено');
+        toast.success(doc.is_folder ? d.deleteFolderSuccess : d.deleteFileSuccess);
         router.refresh();
       }
     } catch {
-      toast.error('Не вдалось видалити');
+      toast.error(d.deleteError);
     } finally {
       setIsDeleting(false);
       setIsDeleteOpen(false);
@@ -141,9 +153,58 @@ export const FileRow = ({ doc }: { doc: DocItem }) => {
     if (doc.is_folder && !isEditing) router.push(`?folder=${doc.id}`);
   };
 
+  // ── Drag handlers ─────────────────────────────────────────────────────────
+  const handleDragStart = (e: React.DragEvent<HTMLTableRowElement>) => {
+    e.dataTransfer.setData('text/plain', doc.id);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLTableRowElement>) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDragEnter = (e: React.DragEvent<HTMLTableRowElement>) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragOver(false);
+  };
+
+  const handleDrop = async (e: React.DragEvent<HTMLTableRowElement>) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const draggedId = e.dataTransfer.getData('text/plain');
+    if (!draggedId || draggedId === doc.id) return;
+    try {
+      const result = await moveDocument(draggedId, doc.id);
+      if (result?.error) {
+        toast.error(result.error);
+      } else {
+        toast.success(d.moveSuccess.replace('{name}', doc.name));
+        router.refresh();
+      }
+    } catch {
+      toast.error(d.moveError);
+    }
+  };
+
   return (
     <>
-      <tr className="hover:bg-primary/[0.03] transition-colors group">
+      <tr
+        className={`hover:bg-primary/[0.03] transition-colors group cursor-pointer
+          ${isDragOver ? 'bg-primary/10 ring-1 ring-inset ring-primary/30 cursor-pointer' : ''}`}
+        draggable={!isEditing}
+        onDragStart={handleDragStart}
+        {...(doc.is_folder ? {
+          onDragOver: handleDragOver,
+          onDragEnter: handleDragEnter,
+          onDragLeave: handleDragLeave,
+          onDrop: handleDrop,
+        } : {})}
+      >
 
         {/* ── Name ── */}
         <td className="px-6 py-4">
@@ -170,7 +231,7 @@ export const FileRow = ({ doc }: { doc: DocItem }) => {
                   onBlur={saveEdit}
                   onKeyDown={handleKeyDown}
                   disabled={isSaving}
-                  className="w-full max-w-xs rounded border border-primary/60 bg-background px-2 py-0.5
+                  className="w-full max-w-xs rounded border border-primary/60 bg-content px-2 py-0.5
                     text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40
                     disabled:opacity-50 transition-colors"
                 />
@@ -181,13 +242,13 @@ export const FileRow = ({ doc }: { doc: DocItem }) => {
                     ${doc.is_folder ? 'cursor-pointer hover:underline underline-offset-4' : 'cursor-default'}`}
                   onClick={handleFolderClick}
                   onDoubleClick={startEdit}
-                  title="Двічі клацніть, щоб перейменувати"
+                  title={d.doubleClickRename}
                 >
                   {doc.name}
                 </div>
               )}
               <div className="text-[10px] text-muted-foreground uppercase tracking-tight">
-                {doc.is_folder ? 'Папка' : formatBytes(doc.size_bytes)}
+                {doc.is_folder ? d.isFolder : formatBytes(doc.size_bytes)}
               </div>
             </div>
           </div>
@@ -205,11 +266,11 @@ export const FileRow = ({ doc }: { doc: DocItem }) => {
               <span className="text-[10px] text-muted-foreground/40">—</span>
             ) : doc.status === 'ready' ? (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-success/10 text-success border border-success/20 shadow-[0_0_10px_rgba(57,255,20,0.1)]">
-                <CheckCircle2 className="w-3 h-3" /> Готово
+                <CheckCircle2 className="w-3 h-3" /> {d.statusReady}
               </span>
             ) : (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-primary/10 text-primary border border-primary/20 animate-pulse">
-                <Clock className="w-3 h-3" /> Аналіз...
+                <Clock className="w-3 h-3" /> {d.statusPending}
               </span>
             )}
           </div>
@@ -221,16 +282,16 @@ export const FileRow = ({ doc }: { doc: DocItem }) => {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
-                  className="p-2 text-muted-foreground hover:text-foreground hover:bg-white/5 rounded-lg transition-all focus:outline-none"
-                  title="Дії"
+                  className="cursor-pointer p-2 text-muted-foreground hover:text-foreground hover:bg-white/5 rounded-lg transition-all focus:outline-none"
+                  title={d.actionsLabel}
                 >
                   <MoreHorizontal className="w-4 h-4" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onSelect={startEdit}>
+              <DropdownMenuContent align="end" style={dynamicStyles as React.CSSProperties}>
+                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); startEdit(); }}>
                   <Pencil className="w-3.5 h-3.5" />
-                  Перейменувати
+                  {d.actionRename}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
@@ -238,7 +299,7 @@ export const FileRow = ({ doc }: { doc: DocItem }) => {
                   onSelect={() => setIsDeleteOpen(true)}
                 >
                   <Trash2 className="w-3.5 h-3.5" />
-                  Видалити
+                  {d.actionDelete}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -248,27 +309,27 @@ export const FileRow = ({ doc }: { doc: DocItem }) => {
 
       {/* ── Delete confirmation — rendered via RadixUI Portal (outside table DOM) ── */}
       <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-        <DialogContent className="max-w-sm">
+        <DialogContent style={dynamicStyles as React.CSSProperties} className="max-w-sm">
           <DialogHeader>
             <DialogTitle>
               <span className="flex items-center gap-2 text-red-400">
                 <Trash2 className="w-5 h-5" />
-                {doc.is_folder ? 'Видалити папку?' : 'Видалити файл?'}
+                {doc.is_folder ? d.deleteFolderTitle : d.deleteFileTitle}
               </span>
             </DialogTitle>
           </DialogHeader>
           <div className="px-6 py-5 space-y-4">
             <p className="text-sm text-muted-foreground">
               {doc.is_folder ? (
-                <>Папку <span className="font-semibold text-foreground">«{doc.name}»</span> та весь її вміст (включно з вкладеними файлами) буде видалено безповоротно.</>
+                <span dangerouslySetInnerHTML={{ __html: d.deleteFolderDesc.replace('{name}', `<span class="font-semibold text-foreground">«${doc.name}»</span>`) }} />
               ) : (
-                <>Файл <span className="font-semibold text-foreground">«{doc.name}»</span> буде видалено безповоротно.</>
+                <span dangerouslySetInnerHTML={{ __html: d.deleteFileDesc.replace('{name}', `<span class="font-semibold text-foreground">«${doc.name}»</span>`) }} />
               )}
             </p>
             <div className="flex gap-3 justify-end">
               <DialogClose asChild>
                 <Button type="button" variant="outline" disabled={isDeleting}>
-                  Скасувати
+                  {d.cancel}
                 </Button>
               </DialogClose>
               <Button
@@ -278,8 +339,8 @@ export const FileRow = ({ doc }: { doc: DocItem }) => {
                 className="bg-red-500/80 hover:bg-red-500 text-white border-transparent shadow-none"
               >
                 {isDeleting
-                  ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />Видалення...</>
-                  : 'Видалити'}
+                  ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />{d.deleting}</>
+                  : d.deleteBtn}
               </Button>
             </div>
           </div>

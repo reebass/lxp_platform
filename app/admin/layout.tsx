@@ -8,6 +8,7 @@ import { GamifiedError } from '@/components/ui/GamifiedError';
 import { ShieldAlert } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
+import { dict } from '@/lib/i18n/dictionaries';
 
 export default async function AdminLayout({
   children,
@@ -42,12 +43,13 @@ export default async function AdminLayout({
 
     // Используем DRY-компонент GamifiedError для отрисовки состояния 403 Forbidden.
     // Это сохраняет пользователя в системе и мягко возвращает на его законный дашборд.
+    const t = dict.uk.admin.error403;
     return (
       <GamifiedError
         imageSrc="/images/403_picture.png"
-        title={<>Упс, ми вас тут не чекали.<br />Далі живуть принцеси...</>}
-        subtitle="Тобі ще рано на таке дивитись. Натисни кнопку, щоб повернутись до навчання."
-        buttonText="Повернутись назад"
+        title={<>{t.title}<br />{t.titleLine2}</>}
+        subtitle={t.subtitle}
+        buttonText={t.backBtn}
       />
     );
   }

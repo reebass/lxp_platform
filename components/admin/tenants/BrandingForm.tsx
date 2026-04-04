@@ -6,6 +6,7 @@ import { Palette, X, Loader2 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { updateTenantBranding } from '@/app/actions/tenant';
+import { dict } from '@/lib/i18n/dictionaries';
 
 // ─── Типы ────────────────────────────────────────────────────────────────────
 
@@ -24,9 +25,10 @@ interface BrandingState {
 // Нативное API useFormStatus работает ТОЛЬКО внутри дочернего элемента родительской <form>.
 function SubmitButton() {
   const { pending } = useFormStatus();
+  const t = dict.uk.admin.tenantsPage.branding;
   return (
     <Button type="submit" variant="primary" className="w-full" disabled={pending}>
-      {pending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin inline" /> Збереження...</> : "Зберегти брендинг"}
+      {pending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin inline" /> {t.saving}</> : t.save}
     </Button>
   );
 }
@@ -80,27 +82,28 @@ const ColorInput = ({ name, label, value, onChange }: ColorInputProps) => (
 // ─── BrandingForm ─────────────────────────────────────────────────────────────
 
 export function BrandingForm({ tenant }: { tenant: any }) {
+  const t = dict.uk.admin.tenantsPage.branding;
 
   // Нормализуем все поля: null из Supabase → '' (пустая строка).
   // initialState фиксируется при монтировании и служит эталоном для сравнения (isDirty).
   const initialState: BrandingState = {
-    logo_url:              tenant.logo_url              || '',
-    color_background:      tenant.color_background      || '',
-    color_content:         tenant.color_content         || '',
-    color_foreground:      tenant.color_foreground       || '',
+    logo_url: tenant.logo_url || '',
+    color_background: tenant.color_background || '',
+    color_content: tenant.color_content || '',
+    color_foreground: tenant.color_foreground || '',
     color_muted_foreground: tenant.color_muted_foreground || '',
-    color_primary:         tenant.color_primary         || '',
-    color_border:          tenant.color_border          || '',
+    color_primary: tenant.color_primary || '',
+    color_border: tenant.color_border || '',
   };
 
   const [formData, setFormData] = useState<BrandingState>({
-    logo_url:              tenant.logo_url              || '',
-    color_background:      tenant.color_background      || '',
-    color_content:         tenant.color_content         || '',
-    color_foreground:      tenant.color_foreground       || '',
+    logo_url: tenant.logo_url || '',
+    color_background: tenant.color_background || '',
+    color_content: tenant.color_content || '',
+    color_foreground: tenant.color_foreground || '',
     color_muted_foreground: tenant.color_muted_foreground || '',
-    color_primary:         tenant.color_primary         || '',
-    color_border:          tenant.color_border          || '',
+    color_primary: tenant.color_primary || '',
+    color_border: tenant.color_border || '',
   });
 
   // СИНХРОНИЗАЦИЯ ПРОПА → СТЕЙТА (useEffect):
@@ -110,13 +113,13 @@ export function BrandingForm({ tenant }: { tenant: any }) {
   // к актуальным значениям из БД — это скрывает кнопку "Сохранить" после успешного сабмита.
   useEffect(() => {
     setFormData({
-      logo_url:              tenant.logo_url              || '',
-      color_background:      tenant.color_background      || '',
-      color_content:         tenant.color_content         || '',
-      color_foreground:      tenant.color_foreground       || '',
+      logo_url: tenant.logo_url || '',
+      color_background: tenant.color_background || '',
+      color_content: tenant.color_content || '',
+      color_foreground: tenant.color_foreground || '',
       color_muted_foreground: tenant.color_muted_foreground || '',
-      color_primary:         tenant.color_primary         || '',
-      color_border:          tenant.color_border          || '',
+      color_primary: tenant.color_primary || '',
+      color_border: tenant.color_border || '',
     });
   }, [tenant]);
 
@@ -136,13 +139,13 @@ export function BrandingForm({ tenant }: { tenant: any }) {
   // initialState). Это гарантирует правильный результат после revalidatePath:
   // tenant проп обновился → новое сравнение → hasChanges = false → кнопка скрыта.
   const hasChanges =
-    formData.logo_url              !== (tenant.logo_url              || '') ||
-    formData.color_background      !== (tenant.color_background      || '') ||
-    formData.color_content         !== (tenant.color_content         || '') ||
-    formData.color_foreground      !== (tenant.color_foreground       || '') ||
+    formData.logo_url !== (tenant.logo_url || '') ||
+    formData.color_background !== (tenant.color_background || '') ||
+    formData.color_content !== (tenant.color_content || '') ||
+    formData.color_foreground !== (tenant.color_foreground || '') ||
     formData.color_muted_foreground !== (tenant.color_muted_foreground || '') ||
-    formData.color_primary         !== (tenant.color_primary         || '') ||
-    formData.color_border          !== (tenant.color_border          || '');
+    formData.color_primary !== (tenant.color_primary || '') ||
+    formData.color_border !== (tenant.color_border || '');
 
   const updateAction = updateTenantBranding.bind(null, tenant.id);
 
@@ -151,14 +154,14 @@ export function BrandingForm({ tenant }: { tenant: any }) {
       <div className="absolute left-0 top-0 h-full w-1 bg-primary/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
       <h3 className="text-xl font-bold text-primary mb-6 flex items-center">
         <Palette className="mr-3" size={24} />
-        Брендинг
+        {t.title}
       </h3>
 
       <form action={updateAction as any} className="space-y-6">
 
         {/* ── Logo URL: Lock & Clear ── */}
         <div className="space-y-1">
-          <label className="text-muted-foreground font-medium text-sm">Логотип (URL)</label>
+          <label className="text-muted-foreground font-medium text-sm">{t.logoUrl}</label>
 
           {/* Flex-контейнер: инпут (с кнопкой ✕ внутри) + превью справа.
               min-h-12 исключает прыжок высоты при появлении/исчезновении превью. */}
@@ -184,7 +187,7 @@ export function BrandingForm({ tenant }: { tenant: any }) {
                   type="button"
                   onClick={handleClearLogo}
                   className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  title="Очистити URL логотипу"
+                  title={t.clearLogo}
                 >
                   <X size={16} />
                 </button>
@@ -196,7 +199,7 @@ export function BrandingForm({ tenant }: { tenant: any }) {
             {formData.logo_url && (
               <img
                 src={formData.logo_url}
-                alt="Logo preview"
+                alt={t.logoPreview}
                 className="w-12 h-12 object-contain bg-background border border-border rounded shrink-0"
                 onError={handleClearLogo}
               />
@@ -207,12 +210,12 @@ export function BrandingForm({ tenant }: { tenant: any }) {
         {/* ── 6-Color Grid ── */}
         {/* 1:1 маппинг: name атрибуты ↔ колонки БД ↔ CSS-переменные */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <ColorInput name="color_background"      label="Фон карток (Card BG)"     value={formData.color_background}       onChange={setField('color_background')} />
-          <ColorInput name="color_content"         label="Фон сторінки (Page BG)"   value={formData.color_content}          onChange={setField('color_content')} />
-          <ColorInput name="color_foreground"      label="Foreground (Текст)"        value={formData.color_foreground}       onChange={setField('color_foreground')} />
-          <ColorInput name="color_muted_foreground" label="Сірий текст (Muted Text)" value={formData.color_muted_foreground} onChange={setField('color_muted_foreground')} />
-          <ColorInput name="color_primary"         label="Primary Accent"            value={formData.color_primary}          onChange={setField('color_primary')} />
-          <ColorInput name="color_border"          label="Border (Межі)"             value={formData.color_border}           onChange={setField('color_border')} />
+          <ColorInput name="color_background" label={t.cardBg} value={formData.color_background} onChange={setField('color_background')} />
+          <ColorInput name="color_content" label={t.pageBg} value={formData.color_content} onChange={setField('color_content')} />
+          <ColorInput name="color_foreground" label={t.foreground} value={formData.color_foreground} onChange={setField('color_foreground')} />
+          <ColorInput name="color_muted_foreground" label={t.mutedForeground} value={formData.color_muted_foreground} onChange={setField('color_muted_foreground')} />
+          <ColorInput name="color_primary" label={t.primaryAccess} value={formData.color_primary} onChange={setField('color_primary')} />
+          <ColorInput name="color_border" label={t.border} value={formData.color_border} onChange={setField('color_border')} />
         </div>
 
         {/* Кнопка ВСЕГДА в DOM (invisible, не conditional) — предотвращает layout shift.

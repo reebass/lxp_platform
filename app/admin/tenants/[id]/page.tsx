@@ -8,6 +8,7 @@ import { GeneralInfoForm } from '@/components/admin/tenants/GeneralInfoForm';
 import { BrandingForm } from '@/components/admin/tenants/BrandingForm';
 import { SubscriptionForm } from '@/components/admin/tenants/SubscriptionForm';
 import { hexToHsl } from '@/lib/colors';
+import { dict } from '@/lib/i18n/dictionaries';
 
 // В Next.js 15 интерфейс params для динамических роутов (App Router) обязан быть Promise.
 interface TenantDetailPageProps {
@@ -28,13 +29,15 @@ export default async function TenantDetail({ params }: TenantDetailPageProps) {
     .eq('id', id)
     .single();
 
+  const d = dict.uk.admin.tenantsPage;
+
   if (error || !tenant) {
     return (
       <div className="flex flex-col items-center justify-center p-16 mt-8 h-64 border-dashed border-2 border-border bg-background/50 rounded-xl">
-        <h2 className="text-2xl text-red-500 opacity-80 font-bold mb-6">Клієнта не знайдено</h2>
+        <h2 className="text-2xl text-red-500 opacity-80 font-bold mb-6">{d.notFound.title}</h2>
         <Link href="/admin/tenants">
           <Button variant="outline">
-            <ArrowLeft className="mr-2" size={16} /> Назад до списку
+            <ArrowLeft className="mr-2" size={16} /> {d.notFound.backToList}
           </Button>
         </Link>
       </div>
@@ -63,7 +66,7 @@ export default async function TenantDetail({ params }: TenantDetailPageProps) {
       <div className="flex flex-col gap-4 border-b border-border pb-6">
         <Link href="/admin/tenants" className="text-muted-foreground hover:text-primary transition-colors flex items-center w-max">
           <ArrowLeft className="mr-2" size={18} />
-          <span className="text-sm font-medium">Назад до списку</span>
+          <span className="text-sm font-medium">{d.notFound.backToList}</span>
         </Link>
         <h1 className="text-4xl font-bold text-foreground drop-shadow-[0_0_2px_hsl(var(--primary))] flex items-center h-12">
           {/* 

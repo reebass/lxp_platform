@@ -27,7 +27,7 @@ export default async function DomainLayout({
     .from('tenants')
     .select('color_content, color_background, color_foreground, color_muted_foreground, color_primary, color_border')
     .or(`subdomain.eq."${cleanDomain}",corporate_domain.eq."${cleanDomain}"`)
-    .single();
+    .maybeSingle();
 
   // Якщо тенант не знайдений — повертаємо 404
   if (error || !tenant) {

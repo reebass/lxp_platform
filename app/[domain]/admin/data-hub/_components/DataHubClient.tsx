@@ -18,7 +18,7 @@ export const DataHubClient = ({
   children,
 }: DataHubClientProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [globalDragFile, setGlobalDragFile] = useState<File | null>(null);
+  const [globalDragFiles, setGlobalDragFiles] = useState<File[] | null>(null);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
 
   const handleGlobalDragOver = useCallback((e: DragEvent) => {
@@ -33,12 +33,18 @@ export const DataHubClient = ({
   const handleGlobalDrop = useCallback((e: DragEvent) => {
     e.preventDefault();
     setIsDraggingOver(false);
-    const file = e.dataTransfer?.files?.[0];
-    if (file) { setGlobalDragFile(file); setIsModalOpen(true); }
+    const files = Array.from(e.dataTransfer?.files ?? []);
+    if (files.length > 0) {
+      setGlobalDragFiles(files);
+      setIsModalOpen(true);
+    }
   }, []);
 
   useEffect(() => {
-    const handleCustomOpen = () => { setGlobalDragFile(null); setIsModalOpen(true); };
+    const handleCustomOpen = () => {
+      setGlobalDragFiles(null);
+      setIsModalOpen(true);
+    };
     window.addEventListener('dragover', handleGlobalDragOver);
     window.addEventListener('dragleave', handleGlobalDragLeave);
     window.addEventListener('drop', handleGlobalDrop);
@@ -61,10 +67,13 @@ export const DataHubClient = ({
 
       <UploadModal
         open={isModalOpen}
-        onOpenChange={(open) => { setIsModalOpen(open); if (!open) setGlobalDragFile(null); }}
+        onOpenChange={(open) => {
+          setIsModalOpen(open);
+          if (!open) setGlobalDragFiles(null);
+        }}
         tenantId={tenantId}
         dynamicStyles={dynamicStyles}
-        initialFile={globalDragFile}
+        initialFiles={globalDragFiles}
         currentFolderId={currentFolderId}
       />
 

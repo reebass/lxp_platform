@@ -24,7 +24,7 @@ export const CourseCard: React.FC = () => {
         <p className="text-muted-foreground text-sm mb-6">
           {t.description}
         </p>
-        
+
         <div className="mb-6">
           <div className="flex justify-between text-xs text-foreground mb-2">
             <span className="font-medium">{t.progressInfo}</span>
@@ -35,7 +35,7 @@ export const CourseCard: React.FC = () => {
           </div>
         </div>
       </div>
-      
+
       <Button variant="outline" type="button">
         {t.continueBtn}
       </Button>

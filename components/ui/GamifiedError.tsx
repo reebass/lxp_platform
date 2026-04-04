@@ -3,6 +3,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/Button';
 import { useRouter } from 'next/navigation';
+import { dict } from '@/lib/i18n/dictionaries';
 
 // Atomic Design: Організм (Organism).
 // Дотримуємося принципу DRY (Don't Repeat Yourself), створюючи єдиний 
@@ -26,6 +27,7 @@ export const GamifiedError: React.FC<GamifiedErrorProps> = ({
   buttonText,
 }) => {
   const router = useRouter();
+  const t = dict.uk.common;
 
   return (
     // ИЗОЛЯЦИЯ ТЕМЫ: страницы 403/404 ВСЕГДА должны отображаться в базовой Cyberpunk-палитре,
@@ -46,7 +48,7 @@ export const GamifiedError: React.FC<GamifiedErrorProps> = ({
       */}
       <img
         src={imageSrc}
-        alt="Error Illustration"
+        alt={t.errorIllustration}
         className="w-3/4 max-w-[280px] md:w-full md:max-w-[500px] h-auto object-contain animate-fade-in"
       />
 
@@ -67,8 +69,8 @@ export const GamifiedError: React.FC<GamifiedErrorProps> = ({
             Это позволяет пользователю вернуться на ту страницу, на которой он был ранее,
             сохраняя контекст его работы или обучения.
           */}
-          <Button 
-            variant="primary" 
+          <Button
+            variant="primary"
             className="w-full md:w-auto text-lg px-8 py-3"
             onClick={() => router.back()}
           >

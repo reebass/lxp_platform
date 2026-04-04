@@ -13,12 +13,14 @@ import {
 import { Button } from '@/components/ui/Button';
 import { createFolder } from '../_lib/document-actions';
 import { toast } from 'sonner';
+import { dict } from '@/lib/i18n/dictionaries';
 
 interface CreateFolderModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   currentFolderId: string | null;
   tenantId: string;
+  dynamicStyles: Record<string, string>;
 }
 
 export const CreateFolderModal = ({
@@ -26,10 +28,13 @@ export const CreateFolderModal = ({
   onOpenChange,
   currentFolderId,
   tenantId,
+  dynamicStyles,
 }: CreateFolderModalProps) => {
   const [name, setName] = useState('');
   const [isPending, setIsPending] = useState(false);
   const router = useRouter();
+
+  const d = dict.uk.dataHub.folderModal;
 
   const handleOpenChange = (next: boolean) => {
     if (!next) setName('');
@@ -46,12 +51,12 @@ export const CreateFolderModal = ({
       if (result?.error) {
         toast.error(result.error);
       } else {
-        toast.success(`Папку «${name.trim()}» створено`);
+        toast.success(d.success.replace('{name}', name.trim()));
         router.refresh();
         handleOpenChange(false);
       }
     } catch {
-      toast.error('Не вдалось створити папку');
+      toast.error(d.error);
     } finally {
       setIsPending(false);
     }
@@ -59,12 +64,12 @@ export const CreateFolderModal = ({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-sm">
+      <DialogContent style={dynamicStyles as React.CSSProperties} className="max-w-sm">
         <DialogHeader>
           <DialogTitle>
             <span className="flex items-center gap-2">
               <FolderPlus className="w-5 h-5 text-primary" />
-              Нова папка
+              {d.title}
             </span>
           </DialogTitle>
         </DialogHeader>
@@ -73,16 +78,16 @@ export const CreateFolderModal = ({
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-muted-foreground mb-1">
-                Назва папки
+                {d.label}
               </label>
               <input
                 autoFocus
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Наприклад: Договори"
+                placeholder={d.placeholder}
                 disabled={isPending}
-                className="w-full rounded-lg border border-border/60 bg-background px-3 py-2 text-sm text-foreground
+                className="w-full rounded-lg border border-border/60 bg-background-content px-3 py-2 text-sm text-foreground
                   placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/40
                   disabled:opacity-50 transition-colors"
               />
@@ -90,13 +95,13 @@ export const CreateFolderModal = ({
             <div className="flex gap-3 justify-end">
               <DialogClose asChild>
                 <Button type="button" variant="outline" disabled={isPending}>
-                  Скасувати
+                  {d.cancel}
                 </Button>
               </DialogClose>
               <Button type="submit" variant="primary" disabled={isPending || !name.trim()}>
                 {isPending
-                  ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />Створення...</>
-                  : 'Створити'}
+                  ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />{d.creating}</>
+                  : d.create}
               </Button>
             </div>
           </form>

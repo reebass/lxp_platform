@@ -3,6 +3,7 @@
 import * as RadixDialog from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
 import React from 'react';
+import { dict } from '@/lib/i18n/dictionaries';
 
 // ---------------------------------------------------------------------------
 // Shared accessible Dialog / Modal built on @radix-ui/react-dialog.
@@ -21,6 +22,8 @@ export function DialogContent({
   children: React.ReactNode;
   className?: string;
 } & React.ComponentPropsWithoutRef<typeof RadixDialog.Content>) {
+  const t = dict.uk.common;
+
   return (
     <RadixDialog.Portal>
       {/* Backdrop */}
@@ -42,7 +45,7 @@ export function DialogContent({
         {/* Close button */}
         <RadixDialog.Close className="absolute cursor-pointer right-4 top-4 rounded-lg p-1.5 text-muted-foreground hover:text-accent transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40">
           <X className="w-4 h-4" />
-          <span className="sr-only">Закрити</span>
+          <span className="sr-only">{t.close}</span>
         </RadixDialog.Close>
 
         {children}

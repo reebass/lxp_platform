@@ -6,14 +6,16 @@ import { Building, Loader2 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { updateTenantGeneral } from '@/app/actions/tenant';
+import { dict } from '@/lib/i18n/dictionaries';
 
 // ─── SubmitButton ─────────────────────────────────────────────────────────────
 // Нативное API useFormStatus работает ТОЛЬКО внутри дочернего элемента <form>.
 function SubmitButton() {
   const { pending } = useFormStatus();
+  const t = dict.uk.admin.tenantsPage.generalInfo;
   return (
     <Button type="submit" variant="primary" className="w-full" disabled={pending}>
-      {pending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin inline" /> Збереження...</> : 'Зберегти інформацію'}
+      {pending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin inline" /> {t.saving}</> : t.save}
     </Button>
   );
 }
@@ -31,11 +33,12 @@ const INPUT_CLASS = `w-full bg-[color-mix(in_srgb,var(--background),black_30%)] 
 // ─── GeneralInfoForm ──────────────────────────────────────────────────────────
 
 export function GeneralInfoForm({ tenant }: { tenant: any }) {
+  const t = dict.uk.admin.tenantsPage.generalInfo;
 
   // Нормализация: null из БД → '' (пустая строка) для контролируемых инпутов.
   // initialState — эталон для сравнения (isDirty pattern).
   const [formData, setFormData] = useState({
-    subdomain:        tenant.subdomain        || '',
+    subdomain: tenant.subdomain || '',
     corporate_domain: tenant.corporate_domain || '',
   });
 
@@ -45,7 +48,7 @@ export function GeneralInfoForm({ tenant }: { tenant: any }) {
   // при зміні пропа стейт скидається до актуальних значень БД і кнопка ховається.
   useEffect(() => {
     setFormData({
-      subdomain:        tenant.subdomain        || '',
+      subdomain: tenant.subdomain || '',
       corporate_domain: tenant.corporate_domain || '',
     });
   }, [tenant]);
@@ -53,7 +56,7 @@ export function GeneralInfoForm({ tenant }: { tenant: any }) {
   // isDirty: порівнюємо кожне поле з поточним tenant пропом (не із замороженим initialState).
   // Так hasChanges завжди актуальний після revalidatePath — проп оновився, порівняння теж.
   const hasChanges =
-    formData.subdomain        !== (tenant.subdomain        || '') ||
+    formData.subdomain !== (tenant.subdomain || '') ||
     formData.corporate_domain !== (tenant.corporate_domain || '');
 
   // Привязка Server Action с жёстко переданным tenantId.
@@ -64,20 +67,20 @@ export function GeneralInfoForm({ tenant }: { tenant: any }) {
       <div className="absolute left-0 top-0 h-full w-1 bg-primary/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       <h3 className="text-xl font-bold text-primary mb-6 flex items-center">
         <Building className="mr-3" size={24} />
-        Загальна інформація
+        {t.title}
       </h3>
 
       {/* Статичные read-only поля (не редактируются) */}
       <div className="space-y-4 text-sm mb-6">
         <div className="flex flex-col">
-          <span className="text-muted-foreground font-medium mb-1">ID Клієнта</span>
+          <span className="text-muted-foreground font-medium mb-1">{t.clientId}</span>
           {/* ID — не редактируемое поле. Используем color-mix для темного фона без хардкода. */}
           <span className="text-foreground font-mono text-xs break-all bg-[color-mix(in_srgb,var(--background),black_30%)] p-2 rounded border border-border">
             {tenant.id}
           </span>
         </div>
         <div className="flex items-center justify-between text-muted-foreground">
-          <span className="font-medium">Створено:</span>
+          <span className="font-medium">{t.createdAt}</span>
           <span className="text-foreground">{new Date(tenant.created_at).toLocaleDateString('uk-UA')}</span>
         </div>
       </div>
@@ -88,7 +91,7 @@ export function GeneralInfoForm({ tenant }: { tenant: any }) {
       <form action={updateAction as any} className="space-y-4">
 
         <div className="space-y-1">
-          <label className="text-muted-foreground font-medium text-sm">Сабдомен</label>
+          <label className="text-muted-foreground font-medium text-sm">{t.subdomain}</label>
           {/* ФИКС BACKSPACE: явная запись по ключу `subdomain` — не [e.target.name],
               чтобы исключить проблему с React Synthetic Event Pooling. */}
           <input
@@ -102,7 +105,7 @@ export function GeneralInfoForm({ tenant }: { tenant: any }) {
         </div>
 
         <div className="space-y-1">
-          <label className="text-muted-foreground font-medium text-sm">Корпоративна пошта</label>
+          <label className="text-muted-foreground font-medium text-sm">{t.corporateEmail}</label>
           <input
             type="text"
             name="corporate_domain"

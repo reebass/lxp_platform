@@ -1,7 +1,9 @@
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import LoginForm from '@/components/auth/LoginForm';
+import { dict } from "@/lib/i18n/dictionaries";
 
+const t = dict.uk.auth;
 // Сторінка-ресивер (Server Component) підтримує динамічну маршутизацію tenant subdomains.
 // CSS-змінні бренду тенанта вже ін'єктовані layout.tsx, тому тут лише рендеримо UI.
 export default async function TenantPage({
@@ -16,10 +18,6 @@ export default async function TenantPage({
   const rawDomain = decodeURIComponent(resolvedParams.domain);
   const cleanDomain = rawDomain.replace('.localhost', '');
 
-  // --- DOMAIN DEBUG ---
-  console.log('--- DOMAIN DEBUG ---');
-  console.log('Raw Domain from URL:', rawDomain);
-  console.log('Cleaned Domain for DB:', cleanDomain);
 
   const supabase = await createClient();
 
@@ -28,7 +26,7 @@ export default async function TenantPage({
     .from('tenants')
     .select('name, logo_url')
     .or(`subdomain.eq."${cleanDomain}",corporate_domain.eq."${cleanDomain}"`)
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error('Supabase Fetch Error:', error);
@@ -53,7 +51,7 @@ export default async function TenantPage({
 
       {/* Тег-лайн платформи */}
       <p className="text-lg text-muted-foreground mb-8">
-        здобувай нові скіли з власним AI коучем
+        {t.tenantSubtitle}
       </p>
 
       {/* Форма входу в режимі тенанта: без соціальних кнопок і реєстрації */}

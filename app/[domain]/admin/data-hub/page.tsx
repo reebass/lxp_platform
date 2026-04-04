@@ -27,7 +27,7 @@ export default async function DataHubPage({
     .from('tenants')
     .select('id, color_content, color_background, color_foreground, color_muted_foreground, color_primary, color_border, storage_limit_mb')
     .or(`subdomain.eq."${cleanDomain}",corporate_domain.eq."${cleanDomain}"`)
-    .single();
+    .maybeSingle();
 
   if (error || !tenant) {
     notFound();
@@ -56,6 +56,7 @@ export default async function DataHubPage({
           tenantId={tenant.id}
           storageLimitMb={tenant.storage_limit_mb ?? 1024}
           currentFolderId={currentFolderId}
+          dynamicStyles={dynamicStyles}
         />
       </DataHubClient>
     </div>

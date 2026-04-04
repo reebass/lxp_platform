@@ -7,7 +7,7 @@ import { dict } from '@/lib/i18n/dictionaries';
 // Выделен из page.tsx для следования паттерну Atomic Design (Организм).
 export const EmptyTenants = () => {
   const d = dict.uk.admin.tenantsPage;
-  
+
   return (
     <Card className="flex flex-col items-center justify-center p-16 mt-8 border-dashed border-2 border-border bg-background/50">
       <Users className="text-muted-foreground mb-4 opacity-50" size={64} />

@@ -43,6 +43,9 @@ export async function middleware(request: NextRequest) {
           );
         },
       },
+      cookieOptions: {
+        path: '/',
+      },
     }
   );
 
@@ -109,6 +112,6 @@ export const config = {
   // Улучшенный matcher исключает API, статику, изображения и скрытые папки Next.js (_next),
   // предотвращая бесконечные циклы перезаписи и снижая нагрузку на Middleware.
   matcher: [
-    "/((?!api/|_next/|_static/|_vercel|[\\w-]+\\.\\w+).*)"
+    "/((?!api|_next|favicon\\.ico|.*\\.[\\w]+$).*)"
   ],
 };

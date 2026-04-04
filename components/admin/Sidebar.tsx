@@ -18,7 +18,7 @@ export const Sidebar = () => {
   return (
     // Используем sticky и shrink-0 вместо fixed, чтобы сайдбар находился в стандартном потоке flex-контейнера 
     // и естественно отталкивал основной контент без наложений и багов.
-    <aside 
+    <aside
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       className={`hidden md:flex sticky top-0 h-screen shrink-0 bg-background/70 backdrop-blur-md border-r border-border transition-all duration-300 z-50 flex-col overflow-hidden ${isExpanded ? 'w-64' : 'w-16'}`}
@@ -29,7 +29,7 @@ export const Sidebar = () => {
           LXP Admin
         </h2>
         {isExpanded && (
-          <button 
+          <button
             onClick={() => setIsPinned(!isPinned)}
             className="text-muted-foreground hover:text-primary transition-colors focus:outline-none ml-2"
           >
@@ -37,7 +37,7 @@ export const Sidebar = () => {
           </button>
         )}
       </div>
-      
+
       <nav className="flex-1 px-2 py-4 space-y-2 flex flex-col items-center w-full">
         <Link href="/admin/tenants" className={`flex items-center w-full rounded-md hover:bg-border/30 transition-colors ${isExpanded ? 'px-4 py-3 justify-start' : 'p-3 justify-center'}`}>
           <Users size={20} className="text-primary shrink-0" />

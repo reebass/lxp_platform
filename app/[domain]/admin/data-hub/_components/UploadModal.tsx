@@ -10,13 +10,14 @@ import {
 } from '@/components/ui/Dialog';
 import { UploadZone } from './UploadZone';
 import { UploadCloud } from 'lucide-react';
+import { dict } from '@/lib/i18n/dictionaries';
 
 interface UploadModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   tenantId: string;
   dynamicStyles: Record<string, string>;
-  initialFile?: File | null;
+  initialFiles?: File[] | null;
   currentFolderId?: string | null;
 }
 
@@ -25,28 +26,30 @@ export const UploadModal = ({
   onOpenChange,
   tenantId,
   dynamicStyles,
-  initialFile,
+  initialFiles,
   currentFolderId = null,
 }: UploadModalProps) => {
+  const d = dict.uk.dataHub.uploadModal;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent style={dynamicStyles as React.CSSProperties} className="max-w-lg bg-background-content text-foreground">
+      <DialogContent style={dynamicStyles as React.CSSProperties} className="max-w-lg">
         <DialogHeader>
           <DialogTitle>
             <span className="flex items-center gap-2">
               <UploadCloud className="w-5 h-5 text-primary" />
-              Додати документ до бази знань
+              {d.title}
             </span>
           </DialogTitle>
           <DialogDescription>
-            Підтримуються PDF, DOCX та TXT файли до 10MB.
+            {d.subtitle}
           </DialogDescription>
         </DialogHeader>
 
         <div className="px-6 py-5">
           <UploadZone
             tenantId={tenantId}
-            initialFile={initialFile}
+            initialFiles={initialFiles}
             currentFolderId={currentFolderId}
             onClose={() => onOpenChange(false)}
           />

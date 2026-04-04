@@ -89,20 +89,37 @@ export default function LoginForm({ isTenantMode = false }: { isTenantMode?: boo
         // Ищем роль пользователя для правильного редиректа
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('role')
+          .select('role, tenant_id')
           .eq('id', authData.user?.id)
           .single();
 
-        // Логируем найденный профиль сразу после аутентификации (Debug)
-        console.log("[LOGIN FLOW] Fetched profile:", profile, "Error:", profileError);
 
-        if (profile?.role === 'superadmin') {
-          console.log("[LOGIN FLOW] Redirecting to /admin...");
-          window.location.href = '/admin';
-        } else {
-          console.log("[LOGIN FLOW] Redirecting to /dashboard...");
-          window.location.href = '/dashboard';
+        let redirectUrl = '/dashboard';
+
+        // 1. Get user email
+        const userEmail = authData.user?.email || trimmedEmail;
+
+        // 2. Extract domain (e.g. novus.ua)
+        const domainPart = userEmail.split("@")[1];
+
+        if (domainPart) {
+          // 3. Query tenants by corporate_domain
+          const { data: tenant } = await supabase
+            .from('tenants')
+            .select('subdomain')
+            .eq('corporate_domain', domainPart)
+            .maybeSingle();
+
+          // 4. Construct URL using subdomain
+          if (tenant?.subdomain) {
+            const rootHost = 'localhost:3000';
+            const protocol = window.location.protocol;
+            // Result: http://edu.novus.localhost:3000/dashboard
+            redirectUrl = `${protocol}//${tenant.subdomain}.${rootHost}/dashboard`;
+          }
         }
+
+        window.location.href = redirectUrl;
       }
     } finally {
       setIsLoading(false);
@@ -174,7 +191,7 @@ export default function LoginForm({ isTenantMode = false }: { isTenantMode?: boo
                 type="button"
                 className="text-muted-foreground hover:text-primary transition-colors focus:outline-none"
                 onClick={() => setShowPassword(!showPassword)}
-                title={showPassword ? "Hide password" : "Show password"}
+                title={showPassword ? t.hidePassword : t.showPassword}
               >
                 {/* Логика показа пароля. Применяется инлайн кнопка с иконкой Eye/EyeOff. 
                     Она переключает type инпута между text и password */}
@@ -229,7 +246,7 @@ export default function LoginForm({ isTenantMode = false }: { isTenantMode?: boo
           <div className="mt-8 text-center text-sm">
             <p className="text-foreground text-opacity-80">
               {t.noAccount}{" "}
-              <a href="#" className="text-primary font-medium transition-all hover:drop-shadow-[0_0_5px_hsl(var(--primary))] hover:underline">
+              <a href="/register" className="text-primary font-medium transition-all hover:drop-shadow-[0_0_5px_hsl(var(--primary))] hover:underline">
                 {t.signUp}
               </a>
             </p>

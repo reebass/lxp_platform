@@ -2,6 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { Home, ChevronRight } from 'lucide-react';
+import { dict } from '@/lib/i18n/dictionaries';
 
 interface BreadcrumbsProps {
   currentFolderId: string | null;
@@ -36,11 +37,13 @@ async function buildPath(
 }
 
 export const Breadcrumbs = async ({ currentFolderId }: BreadcrumbsProps) => {
+  const d = dict.uk.dataHub.breadcrumbs;
+
   if (!currentFolderId) {
     return (
       <nav className="flex items-center gap-1.5 text-sm text-muted-foreground mb-3">
         <Home className="w-3.5 h-3.5 shrink-0" />
-        <span className="font-medium text-foreground">Головна</span>
+        <span className="font-medium text-foreground">{d.home}</span>
       </nav>
     );
   }
@@ -56,7 +59,7 @@ export const Breadcrumbs = async ({ currentFolderId }: BreadcrumbsProps) => {
         className="flex items-center gap-1 hover:text-primary transition-colors shrink-0"
       >
         <Home className="w-3.5 h-3.5" />
-        <span>Головна</span>
+        <span>{d.home}</span>
       </Link>
 
       {crumbs.map((crumb, i) => {

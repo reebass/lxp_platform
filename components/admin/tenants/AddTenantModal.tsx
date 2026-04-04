@@ -13,16 +13,18 @@ import {
 } from '@/components/ui/Dialog';
 import { Plus, Loader2, Building2 } from 'lucide-react';
 import { createTenant } from '@/app/actions/tenant';
+import { dict } from '@/lib/i18n/dictionaries';
 
 // Компонент-атом для кнопки подтверждения, использующий useFormStatus().
 // Он автоматически подписывается на жизненный цикл родительской <form> 
 // и извлекает стейт `pending` (загрузка) при вызове серверного Action.
 function SubmitButton() {
   const { pending } = useFormStatus();
+  const t = dict.uk.admin.tenantsPage.addModal;
 
   return (
     <Button type="submit" variant="primary" disabled={pending}>
-      {pending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin inline" /> Створення...</> : 'Створити'}
+      {pending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin inline" /> {t.creating}</> : t.create}
     </Button>
   );
 }
@@ -31,6 +33,8 @@ export const AddTenantModal = () => {
   // Контролируемый стейт диалога. Нужен для программного закрытия после успешного сабмита.
   const [open, setOpen] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const t = dict.uk.admin.tenantsPage.addModal;
+  const d = dict.uk.admin.tenantsPage;
 
   // Обработчик смены стейта открытия — сбрасываем ошибку при любом закрытии.
   function handleOpenChange(next: boolean) {
@@ -43,7 +47,7 @@ export const AddTenantModal = () => {
   async function clientAction(formData: FormData) {
     const name = formData.get('name') as string;
     if (!name || name.trim() === '') {
-      setErrorMsg('Будь ласка, введіть назву компанії.');
+      setErrorMsg(t.errorEmptyName);
       return;
     }
 
@@ -62,7 +66,7 @@ export const AddTenantModal = () => {
       <DialogTrigger asChild>
         <Button variant="primary" className="flex items-center text-sm px-6 w-full md:w-auto">
           <Plus className="mr-2" size={20} />
-          Додати клієнта
+          {d.addBtn}
         </Button>
       </DialogTrigger>
 
@@ -71,7 +75,7 @@ export const AddTenantModal = () => {
           <DialogTitle>
             <span className="flex items-center gap-2">
               <Building2 className="w-5 h-5 text-primary" />
-              Новий клієнт
+              {t.newTenant}
             </span>
           </DialogTitle>
         </DialogHeader>
@@ -86,7 +90,7 @@ export const AddTenantModal = () => {
           <form action={clientAction} className="space-y-4">
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-muted-foreground mb-1">
-                Назва компанії *
+                {t.companyName}
               </label>
               <input
                 type="text"
@@ -94,7 +98,7 @@ export const AddTenantModal = () => {
                 name="name"
                 required
                 className="w-full px-4 py-3 bg-background border border-graphite rounded-md text-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
-                placeholder="Введіть назву"
+                placeholder={t.enterName}
                 onChange={() => setErrorMsg(null)}
               />
             </div>
@@ -103,28 +107,28 @@ export const AddTenantModal = () => {
                 щоб Server Action міг коректно їх витягнути з FormData. */}
             <div>
               <label htmlFor="subdomain" className="block text-sm font-medium text-muted-foreground mb-1">
-                Сабдомен платформи (необов'язково)
+                {t.subdomainLabel}
               </label>
               <input
                 type="text"
                 id="subdomain"
                 name="subdomain"
                 className="w-full px-4 py-3 bg-background border border-graphite rounded-md text-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
-                placeholder="наприклад: novus"
+                placeholder={t.subdomainPlaceholder}
                 onChange={() => setErrorMsg(null)}
               />
             </div>
 
             <div>
               <label htmlFor="corporate_domain" className="block text-sm font-medium text-muted-foreground mb-1">
-                Корпоративний домен пошти (необов'язково)
+                {t.domainLabel}
               </label>
               <input
                 type="text"
                 id="corporate_domain"
                 name="corporate_domain"
                 className="w-full px-4 py-3 bg-background border border-graphite rounded-md text-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
-                placeholder="наприклад: novus.ua"
+                placeholder={t.domainPlaceholder}
                 onChange={() => setErrorMsg(null)}
               />
             </div>

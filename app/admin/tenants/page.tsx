@@ -56,17 +56,16 @@ export default async function TenantsPage() {
         </h1>
         <div className="w-full md:w-auto flex items-center justify-center gap-3">
           {/* Глобальна статистика сховища файлів (Supabase Storage Buckets, ліміт 1 ГБ) */}
-          <div className={`flex items-center gap-2.5 px-3 py-1.5 rounded-lg border text-xs transition-colors ${
-            isStorageCritical
-              ? 'bg-red-950/30 border-red-500/50 text-red-400'
-              : 'bg-background border-border/60 text-muted-foreground'
-          }`}>
+          <div className={`flex items-center gap-2.5 px-3 py-1.5 rounded-lg border text-xs transition-colors ${isStorageCritical
+            ? 'bg-red-950/30 border-red-500/50 text-red-400'
+            : 'bg-background border-border/60 text-muted-foreground'
+            }`}>
             <Database className={`w-3.5 h-3.5 shrink-0 ${isStorageCritical ? 'text-red-400' : 'text-primary/70'}`} />
             <div className="flex flex-col leading-tight">
               <span className={`font-semibold tabular-nums ${isStorageCritical ? 'text-red-400' : 'text-foreground'}`}>
-                Вільне місце: {formatBytes(remainingBytes)} із 1 GB
+                {d.storageStats.freeSpace}{formatBytes(remainingBytes)}{d.storageStats.outOf}1 GB
               </span>
-              <span className="text-[10px] opacity-60">Сховище файлів (Storage)</span>
+              <span className="text-[10px] opacity-60">{d.storageStats.storageLabel}</span>
             </div>
           </div>
           <AddTenantModal />

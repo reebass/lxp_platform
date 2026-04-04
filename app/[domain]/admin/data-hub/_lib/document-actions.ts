@@ -151,7 +151,7 @@ export async function deleteDocument(id: string, isFolder: boolean) {
         .remove([doc.file_path]);
 
       if (storageError) {
-        console.error('Storage remove error (file):', storageError);
+        console.error('Storage delete error:', storageError, '| path:', doc.file_path);
         // Not fatal — prioritise DB consistency
       }
     }
@@ -165,6 +165,29 @@ export async function deleteDocument(id: string, isFolder: boolean) {
       console.error('deleteDocument (file) DB error:', dbError);
       return { error: dbError.message };
     }
+  }
+
+  revalidatePath('/[domain]/admin/data-hub', 'page');
+  return { success: true };
+}
+
+// ── moveDocument ──────────────────────────────────────────────────────────────
+// Updates the parent_id for the document with the given id.
+export async function moveDocument(id: string, newParentId: string | null) {
+  if (id === newParentId) {
+    return { error: 'Неможливо перемістити папку в саму себе.' };
+  }
+
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from('documents')
+    .update({ parent_id: newParentId })
+    .eq('id', id);
+
+  if (error) {
+    console.error('moveDocument error:', error);
+    return { error: error.message };
   }
 
   revalidatePath('/[domain]/admin/data-hub', 'page');

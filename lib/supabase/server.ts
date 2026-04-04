@@ -24,6 +24,9 @@ export async function createClient() {
           }
         },
       },
+      cookieOptions: {
+        path: '/',
+      },
     }
   );
 }

@@ -6,13 +6,15 @@ import { CreditCard, Loader2 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { updateTenantSubscription } from '@/app/actions/tenant';
+import { dict } from '@/lib/i18n/dictionaries';
 
 // ─── SubmitButton ─────────────────────────────────────────────────────────────
 function SubmitButton() {
   const { pending } = useFormStatus();
+  const t = dict.uk.admin.tenantsPage.subscription;
   return (
     <Button type="submit" variant="primary" className="w-full" disabled={pending}>
-      {pending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin inline" /> Збереження...</> : 'Зберегти підписку'}
+      {pending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin inline" /> {t.saving}</> : t.save}
     </Button>
   );
 }
@@ -37,6 +39,7 @@ const formatDateForInput = (isoString?: string | null): string =>
   isoString ? new Date(isoString).toISOString().split('T')[0] : '';
 
 export function SubscriptionForm({ tenant }: { tenant: any }) {
+  const t = dict.uk.admin.tenantsPage.subscription;
 
   // Нормализация: null из БД → дефолтные строки для контролируемых инпутов.
   // max_users нормализуем в строку (инпут type="number" работает со строками).
@@ -85,7 +88,7 @@ export function SubscriptionForm({ tenant }: { tenant: any }) {
       <div className="absolute left-0 top-0 h-full w-1 bg-primary/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       <h3 className="text-xl font-bold text-primary mb-6 flex items-center">
         <CreditCard className="mr-3" size={24} />
-        Підписка та Ліміти
+        {t.title}
       </h3>
 
       <form action={updateAction as any} className="space-y-4">
@@ -94,7 +97,7 @@ export function SubscriptionForm({ tenant }: { tenant: any }) {
         <div className="space-y-1">
           <label className="text-muted-foreground font-medium text-sm flex items-center gap-2">
             <span className={statusDotClass} />
-            Статус
+            {t.status}
           </label>
           {/* ФИКС BACKSPACE: явная запись по ключу `status` вместо [e.target.name]. */}
           <select
@@ -111,7 +114,7 @@ export function SubscriptionForm({ tenant }: { tenant: any }) {
 
         {/* Тарифний план */}
         <div className="space-y-1">
-          <label className="text-muted-foreground font-medium text-sm">Поточний план</label>
+          <label className="text-muted-foreground font-medium text-sm">{t.currentPlan}</label>
           <select
             name="subscription_plan"
             value={formData.subscription_plan}
@@ -128,8 +131,8 @@ export function SubscriptionForm({ tenant }: { tenant: any }) {
         {/* Ліміт користувачів: порожнє = безліміт */}
         <div className="space-y-1">
           <label className="text-muted-foreground font-medium text-sm">
-            Ліміт користувачів
-            <span className="ml-1 text-xs text-muted-foreground">(порожнє = безліміт)</span>
+            {t.userLimit}
+            <span className="ml-1 text-xs text-muted-foreground">{t.emptyIsUnlimited}</span>
           </label>
           <input
             type="number"
@@ -137,7 +140,7 @@ export function SubscriptionForm({ tenant }: { tenant: any }) {
             value={formData.max_users}
             min={1}
             onChange={(e) => setFormData({ ...formData, max_users: e.target.value })}
-            placeholder="Безліміт"
+            placeholder={t.unlimited}
             className={INPUT_BASE}
           />
         </div>
@@ -145,7 +148,7 @@ export function SubscriptionForm({ tenant }: { tenant: any }) {
         {/* Кінець Trial періоду */}
         <div className="space-y-1">
           <label className="text-muted-foreground font-medium text-sm">
-            Кінець пробного періоду
+            {t.trialEnd}
           </label>
           <input
             type="date"
@@ -160,7 +163,7 @@ export function SubscriptionForm({ tenant }: { tenant: any }) {
         {/* Ліміт сховища: пресети в МБ, відображаємо як зрозумілі ГБ/МБ */}
         <div className="space-y-1">
           <label className="text-muted-foreground font-medium text-sm flex items-center gap-2">
-            Ліміт сховища
+            {t.storageLimit}
           </label>
           <select
             name="storage_limit_mb"
