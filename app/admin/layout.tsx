@@ -55,7 +55,7 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className="flex min-h-screen bg-background text-foreground">
+    <div className="flex h-screen bg-background text-foreground">
       {/* Смарт-сайдбар (w-16 в свернутом, w-64 в развернутом виде) */}
       <Sidebar />
       <MobileNav />
@@ -68,7 +68,7 @@ export default async function AdminLayout({
         <AdminHeader />
 
         {/* children — это текущая активная страница */}
-        <main className="flex-1 p-8 bg-content relative z-0 overflow-auto">
+        <main className="flex-1 bg-content relative z-0 overflow-auto">
           {children}
         </main>
       </div>

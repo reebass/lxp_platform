@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { hexToHsl } from '@/lib/colors';
 import React from 'react';
+import { SpotlightChat } from '@/components/ai/SpotlightChat';
 
 // Layout-компонент для всіх сторінок під субдоменом тенанта.
 // Відповідає за завантаження бренду тенанта та ін'єкцію CSS-змінних у DOM,
@@ -25,7 +26,7 @@ export default async function DomainLayout({
   // Завантажуємо тенанта за субдоменом або корпоративним доменом
   const { data: tenant, error } = await supabase
     .from('tenants')
-    .select('color_content, color_background, color_foreground, color_muted_foreground, color_primary, color_border')
+    .select('id, color_content, color_background, color_foreground, color_muted_foreground, color_primary, color_border')
     .or(`subdomain.eq."${cleanDomain}",corporate_domain.eq."${cleanDomain}"`)
     .maybeSingle();
 
@@ -59,9 +60,10 @@ export default async function DomainLayout({
     // отримають правильні кольори без будь-яких додаткових налаштувань.
     <div
       style={dynamicStyles as React.CSSProperties}
-      className="min-h-screen bg-background-content text-foreground flex flex-col"
+      className="min-h-screen bg-background-content text-foreground flex flex-col relative"
     >
       {children}
+      <SpotlightChat tenantId={tenant.id} />
     </div>
   );
 }

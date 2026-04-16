@@ -48,7 +48,7 @@ export default async function TenantsPage() {
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full p-8">
       <div className="flex flex-col md:flex-row justify-between items-center md:items-center mb-8 gap-4">
         <h1 className="text-3xl font-bold text-foreground flex items-center">
           <Users className="text-primary mr-3" size={32} />

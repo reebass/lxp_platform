@@ -8,7 +8,7 @@ export default function AdminPage() {
   const d = dict.uk.admin;
 
   return (
-    <div className="max-w-4xl max-w-full">
+    <div className="max-w-4xl max-w-full p-8">
       <Card>
         <h2 className="text-2xl font-semibold text-foreground mb-2">{d.welcome}</h2>
         {/* Адаптивный текст-подсказка. 

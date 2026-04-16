@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Users, Library, CreditCard, Pin, PinOff } from 'lucide-react';
+import { Users, Library, CreditCard, Pin, PinOff, Blocks } from 'lucide-react';
 import { dict } from '@/lib/i18n/dictionaries';
 
 // Смарт-Сайдбар: Client Component ("use client"), т.к. мы используем React State.
@@ -55,6 +55,12 @@ export const Sidebar = () => {
           <CreditCard size={20} className="text-primary shrink-0" />
           <span className={`ml-3 text-foreground whitespace-nowrap overflow-hidden transition-all duration-300 ${isExpanded ? 'opacity-100' : 'opacity-0 w-0'}`}>
             {d.billing}
+          </span>
+        </Link>
+        <Link href="/admin/course-builder" className={`flex items-center w-full rounded-md hover:bg-border/30 transition-colors ${isExpanded ? 'px-4 py-3 justify-start' : 'p-3 justify-center'}`}>
+          <Blocks size={20} className="text-primary shrink-0" />
+          <span className={`ml-3 text-foreground whitespace-nowrap overflow-hidden transition-all duration-300 ${isExpanded ? 'opacity-100' : 'opacity-0 w-0'}`}>
+            {dict.uk.course_builder.title}
           </span>
         </Link>
       </nav>

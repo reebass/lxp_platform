@@ -1,5 +1,6 @@
 import React from 'react';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
+import { SpotlightChat } from '@/components/ai/SpotlightChat';
 
 export default function DashboardLayout({
   children,
@@ -17,6 +18,7 @@ export default function DashboardLayout({
       <main className="flex-1 w-full max-w-7xl mx-auto p-4 md:p-8 lg:p-12 pt-24 lg:pt-32">
         {children}
       </main>
+      <SpotlightChat tenantId={null} />
     </div>
   );
 }

@@ -158,8 +158,24 @@ export const dict = {
         title: 'Вступ до розробки LXP',
         description: 'Цей курс навчить вас створювати платформи для навчання з використанням Next.js, Tailwind і патерну Atomic Design.',
         progressInfo: 'Ваш прогрес',
+        rowTextComplete: 'Обробка завершена',
         continueBtn: 'Продовжити',
       }
+    },
+    ai_assistant: {
+      placeholder: 'Задайте питання...',
+      search_trigger: 'Пошук або питання AI...',
+      greeting: 'Привіт! Я ваш AI-асистент. Що ви хочете знайти або дізнатися?',
+      typing: 'AI шукає та обмірковує...',
+      error: 'Вибачте, сталася помилка з\'єднання.',
+    },
+    course_builder: {
+      title: 'Конструктор курсів',
+      subtitle: 'Перетягуйте та з\'єднуйте блоки, щоб візуально спроектувати ваш курс.',
+      btn_reset: 'Скинути',
+      btn_save: 'Зберегти курс',
+      node_start: '🚀 Початок',
+      node_finish: '🏁 Кінець',
     },
     admin: {
       sidebar: {
@@ -254,6 +270,14 @@ export const dict = {
         subtitle: 'Тобі ще рано на таке дивитись. Натисни кнопку, щоб повернутись до навчання.',
         backBtn: 'Повернутись назад'
       }
+    },
+    tenant_admin: {
+      sidebar_data_hub: 'База знань',
+      sidebar_course_builder: 'Конструктор курсів',
+      header_title: 'Панель управління',
+      welcome_title: 'Ласкаво просимо в панель адміністратора',
+      welcome_subtitle: 'Виберіть потрібний розділ у боковому меню ліворуч, щоб почати роботу.',
+      logout: 'Вийти',
     },
     common: {
       close: 'Закрити',
@@ -411,8 +435,24 @@ export const dict = {
         title: 'Intro to LXP Development',
         description: 'This course will teach you how to build learning platforms using Next.js, Tailwind, and Atomic Design.',
         progressInfo: 'Your progress',
+        rowTextComplete: 'Processing complete',
         continueBtn: 'Continue',
       }
+    },
+    ai_assistant: {
+      placeholder: 'Ask a question...',
+      search_trigger: 'Search or ask AI...',
+      greeting: 'Hi! I am your AI assistant. What would you like to search or learn?',
+      typing: 'AI is searching and thinking...',
+      error: 'Sorry, a connection error occurred.',
+    },
+    course_builder: {
+      title: 'Course Builder',
+      subtitle: 'Drag and connect nodes to visually design your course flow.',
+      btn_reset: 'Reset',
+      btn_save: 'Save Course',
+      node_start: '🚀 Start',
+      node_finish: '🏁 Finish',
     },
     admin: {
       sidebar: {
@@ -507,6 +547,14 @@ export const dict = {
         subtitle: 'You are too early to see this. Click the button to return to learning.',
         backBtn: 'Go back'
       }
+    },
+    tenant_admin: {
+      sidebar_data_hub: 'Data Hub',
+      sidebar_course_builder: 'Course Builder',
+      header_title: 'Control Panel',
+      welcome_title: 'Welcome to the Admin Panel',
+      welcome_subtitle: 'Select a section in the left sidebar to get started.',
+      logout: 'Logout',
     },
     common: {
       close: 'Close',
