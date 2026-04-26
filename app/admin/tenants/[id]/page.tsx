@@ -58,7 +58,7 @@ export default async function TenantDetail({ params }: TenantDetailPageProps) {
   if (tenant.color_content) cssVars += `  --background-content: ${hexToHsl(tenant.color_content)} !important;\n`;
 
   return (
-    <div className="w-full space-y-8">
+    <div className="w-full space-y-8 p-8">
       {/* Рендерим <style> тег ТОЛЬКО если хотя бы одна CSS-переменная была кастомизирована в БД.
           Если cssVars пуста, тег не нужен — globals.css уже задаёт все дефолты. */}
       {cssVars && <style dangerouslySetInnerHTML={{ __html: `:root {\n${cssVars}}` }} />}

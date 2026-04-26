@@ -1,14 +1,17 @@
 "use client";
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import {
   ReactFlow,
+  ReactFlowProvider,
   Background,
   Controls,
   MiniMap,
   addEdge,
   useNodesState,
   useEdgesState,
+  useReactFlow,
   type Node,
   type Edge,
   type OnConnect,
@@ -16,69 +19,171 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { dict } from '@/lib/i18n/dictionaries';
+import { Button } from '@/components/ui/Button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from '@/components/ui/Dialog';
+import { PdfNode } from './nodes/PdfNode';
+import { VideoNode } from './nodes/VideoNode';
+import { AudioNode } from './nodes/AudioNode';
+import { QuizNode } from './nodes/QuizNode';
+import { CourseBuilderSidebar } from './CourseBuilderSidebar';
+import { EditingContext } from './CourseBuilderContext';
+import { useCourseSync } from './hooks/useCourseSync';
 
+// ---------- helpers ----------
+const getId = (type: string) => `${type}_${crypto.randomUUID().slice(0, 8)}`;
+
+// ---------- types ----------
 interface CourseBuilderCanvasProps {
   mode: 'master' | 'tenant';
-  onSave: (flowData: { nodes: Node[]; edges: Edge[] }) => void;
+  courseId?: string | null;
+  initialFlowData?: { nodes: Node[]; edges: Edge[] } | null;
+  loadError?: string | null;
 }
 
-export const CourseBuilderCanvas: React.FC<CourseBuilderCanvasProps> = ({ mode, onSave }) => {
-  // TODO: Dynamically select locale later. Using 'uk' for now.
+// ---------- default nodes (used when no saved data) ----------
+const createDefaultNodes = (t: typeof dict.uk.course_builder): Node[] => [
+  {
+    id: 'start',
+    type: 'input',
+    data: { label: t.node_start },
+    position: { x: 250, y: 50 },
+    deletable: false,
+    style: {
+      background: '#d1fae5',
+      border: '2px solid #10b981',
+      borderRadius: '10px',
+      padding: '10px 20px',
+      fontWeight: 600,
+      color: '#065f46',
+    },
+  },
+  {
+    id: 'finish',
+    type: 'output',
+    data: { label: t.node_finish },
+    position: { x: 250, y: 250 },
+    deletable: false,
+    style: {
+      background: '#fee2e2',
+      border: '2px solid #ef4444',
+      borderRadius: '10px',
+      padding: '10px 20px',
+      fontWeight: 600,
+      color: '#7f1d1d',
+    },
+  },
+];
+
+// ---------- inner component (needs ReactFlowProvider above it) ----------
+const CourseBuilderInner: React.FC<CourseBuilderCanvasProps> = ({
+  mode,
+  courseId: initialCourseId,
+  initialFlowData,
+  loadError,
+}) => {
   const t = dict.uk.course_builder;
+  const reactFlowWrapper = useRef<HTMLDivElement>(null);
 
-  const initialNodes: Node[] = [
-    {
-      id: 'start',
-      type: 'input',
-      data: { label: t.node_start },
-      position: { x: 250, y: 50 },
-      deletable: false,
-      style: {
-        background: '#d1fae5',
-        border: '2px solid #10b981',
-        borderRadius: '10px',
-        padding: '10px 20px',
-        fontWeight: 600,
-        color: '#065f46',
-      },
-    },
-    {
-      id: 'finish',
-      type: 'output',
-      data: { label: t.node_finish },
-      position: { x: 250, y: 250 },
-      deletable: false,
-      style: {
-        background: '#fee2e2',
-        border: '2px solid #ef4444',
-        borderRadius: '10px',
-        padding: '10px 20px',
-        fontWeight: 600,
-        color: '#7f1d1d',
-      },
-    },
-  ];
+  // Show toast if course couldn't be loaded
+  useEffect(() => {
+    if (loadError) {
+      toast.error(loadError);
+    }
+  }, [loadError]);
+  const { screenToFlowPosition } = useReactFlow();
 
-  const initialEdges: Edge[] = [
-    {
-      id: 'start-finish',
-      source: 'start',
-      target: 'finish',
-      animated: true,
-      style: { stroke: 'hsl(var(--primary))', strokeWidth: 2 },
-    },
-  ];
+  // Map node type → default base name for auto-naming
+  const defaultNames: Record<string, string> = useMemo(() => ({
+    pdf: t.default_name_pdf,
+    video: t.default_name_video,
+    audio: t.default_name_audio,
+    quiz: t.default_name_quiz,
+  }), [t]);
 
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  // Hydrate from DB or use defaults
+  const startNodes = initialFlowData?.nodes ?? createDefaultNodes(t);
+  const startEdges = initialFlowData?.edges ?? [];
+
+  const [nodes, setNodes, onNodesChange] = useNodesState(startNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(startEdges);
+
+  const nodeTypes = useMemo(() => ({
+    pdf: PdfNode,
+    video: VideoNode,
+    audio: AudioNode,
+    quiz: QuizNode,
+  }), []);
 
   const onConnect: OnConnect = useCallback(
     (connection) => setEdges((eds) => addEdge({ ...connection, animated: true }, eds)),
     [setEdges],
   );
 
+  // ---- Drag & Drop handlers ----
+  const onDragOver = useCallback((event: React.DragEvent) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+  }, []);
+
+  const onDrop = useCallback(
+    (event: React.DragEvent) => {
+      event.preventDefault();
+
+      const type = event.dataTransfer.getData('application/reactflow');
+      if (!type) return;
+
+      const position = screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
+      });
+
+      setNodes((nds) => {
+        const count = nds.filter((n) => n.type === type).length;
+        const baseName = defaultNames[type] ?? type;
+        const newNode: Node = {
+          id: getId(type),
+          type,
+          position,
+          data: { label: `${baseName} ${count + 1}` },
+        };
+        return [...nds, newNode];
+      });
+    },
+    [screenToFlowPosition, setNodes, defaultNames],
+  );
+
+  // ---- Editing state (decoupled from native selection) ----
+  const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
+  const editingNode = editingNodeId ? nodes.find((n) => n.id === editingNodeId) : undefined;
+
+  const updateNodeData = useCallback(
+    (id: string, data: Record<string, unknown>) => {
+      setNodes((nds) =>
+        nds.map((n) => (n.id === id ? { ...n, data: { ...n.data, ...data } } : n)),
+      );
+    },
+    [setNodes],
+  );
+
+  const closeSettings = useCallback(() => {
+    setEditingNodeId(null);
+  }, []);
+
+  // ---- Persistence ----
+  const { isPending, save } = useCourseSync(initialCourseId ?? null);
+
   const handleSave = () => {
-    onSave({ nodes, edges });
+    save({ nodes, edges });
+  };
+
+  // ---- Reset ----
+  const [showResetDialog, setShowResetDialog] = useState(false);
+
+  const handleReset = () => {
+    setNodes(createDefaultNodes(t));
+    setEdges([]);
+    setEditingNodeId(null);
+    setShowResetDialog(false);
   };
 
   return (
@@ -93,49 +198,93 @@ export const CourseBuilderCanvas: React.FC<CourseBuilderCanvasProps> = ({ mode, 
         </div>
         <div className="flex items-center gap-3">
           <span className="text-xs font-mono text-muted-foreground px-2">Mode: {mode}</span>
-          <button className="px-4 py-2 text-sm font-medium border border-border/60 rounded-lg text-muted-foreground hover:bg-muted/40 transition-colors">
+          <Button variant="minimal" className="border-[0.5px] border-foreground/40" onClick={() => setShowResetDialog(true)}>
             {t.btn_reset}
-          </button>
-          <button
-            onClick={handleSave}
-            className="px-4 py-2 text-sm font-semibold bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors shadow-sm"
-          >
-            {t.btn_save}
-          </button>
+          </Button>
+          <Button variant="primary" onClick={handleSave} disabled={isPending}>
+            {isPending ? t.btn_saving : t.btn_save}
+          </Button>
         </div>
       </div>
 
-      {/* Canvas */}
-      <div className="w-full flex-1 relative min-h-[500px]">
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          deleteKeyCode={['Backspace', 'Delete']}
-          fitView
-          attributionPosition="bottom-right"
-          className="bg-background-content"
-        >
-          <Background
-            variant={BackgroundVariant.Dots}
-            gap={20}
-            size={1}
-            color="hsl(var(--border))"
-          />
-          <Controls className="[&>button]:bg-background [&>button]:border-border [&>button]:text-foreground [&>button:hover]:bg-muted" />
-          <MiniMap
-            nodeColor={(node) => {
-              if (node.type === 'input') return '#10b981';
-              if (node.type === 'output') return '#ef4444';
-              return 'hsl(var(--primary))';
-            }}
-            maskColor="hsl(var(--background) / 0.7)"
-            className="!bg-background border border-border/40 rounded-xl overflow-hidden shadow-lg"
-          />
-        </ReactFlow>
+      {/* Reset Confirmation Dialog */}
+      <Dialog open={showResetDialog} onOpenChange={setShowResetDialog}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t.confirm_reset_title}</DialogTitle>
+            <DialogDescription>{t.confirm_reset_description}</DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-center gap-3 px-6 py-6 transition-all">
+            <DialogClose asChild>
+              <Button variant="primary">
+                {t.btn_cancel}
+              </Button>
+            </DialogClose>
+            <Button
+              variant="minimal"
+              onClick={handleReset}
+              className="border-[0.5px] border-border hover:bg-destructive/5 hover:text-destructive hover:border-destructive/30"
+            >
+              {t.btn_confirm_reset}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Sidebar + Canvas row */}
+      <div className="flex flex-row flex-1 min-h-0">
+
+        <div className="flex-1 relative" ref={reactFlowWrapper}>
+          <EditingContext.Provider value={{ editingNodeId, setEditingNodeId }}>
+            <ReactFlow
+              nodes={nodes}
+              edges={edges}
+              nodeTypes={nodeTypes}
+              onNodesChange={onNodesChange}
+              onEdgesChange={onEdgesChange}
+              onConnect={onConnect}
+              onDragOver={onDragOver}
+              onDrop={onDrop}
+              deleteKeyCode={['Backspace', 'Delete']}
+              fitView
+              attributionPosition="bottom-right"
+              className="bg-background-content"
+            >
+              <Background
+                variant={BackgroundVariant.Dots}
+                gap={20}
+                size={1}
+                color="hsl(var(--border))"
+              />
+              <Controls className="[&>button]:bg-background [&>button]:border-border [&>button]:text-foreground [&>button:hover]:bg-muted" />
+              <MiniMap
+                nodeColor={(node) => {
+                  if (node.type === 'input') return '#10b981';
+                  if (node.type === 'output') return '#ef4444';
+                  return 'hsl(var(--primary))';
+                }}
+                maskColor="hsl(var(--background) / 0.7)"
+                className="!bg-background border border-border/40 rounded-xl overflow-hidden shadow-lg"
+              />
+            </ReactFlow>
+          </EditingContext.Provider>
+        </div>
+
+        <CourseBuilderSidebar
+          selectedNode={editingNode}
+          updateNodeData={updateNodeData}
+          deselectAll={closeSettings}
+        />
       </div>
     </div>
+  );
+};
+
+// ---------- public wrapper (provides ReactFlowProvider) ----------
+export const CourseBuilderCanvas: React.FC<CourseBuilderCanvasProps> = (props) => {
+  return (
+    <ReactFlowProvider>
+      <CourseBuilderInner {...props} />
+    </ReactFlowProvider>
   );
 };

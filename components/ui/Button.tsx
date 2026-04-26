@@ -12,7 +12,7 @@ import React, { ButtonHTMLAttributes } from 'react';
 // Используем строго 'primary' (заливка) и 'outline' (обводка), чтобы избежать
 // разрастания кода и поддерживать строгий Atomic Design по макету Cyberpunk.
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'outline';
+  variant?: 'primary' | 'outline' | 'minimal';
   className?: string;
 }
 
@@ -22,16 +22,18 @@ export const Button: React.FC<ButtonProps> = ({
   className = '',
   ...props
 }) => {
-  const baseStyles = "inline-flex items-center justify-center rounded-md text-sm font-semibold transition-all duration-200 focus:outline-none disabled:pointer-events-none disabled:opacity-50 disabled:bg-gray-800 disabled:text-gray-500 disabled:border-gray-800 px-4 py-2 cursor-pointer";
+  const baseStyles = "inline-flex items-center justify-center rounded-md text-sm transition-all duration-200 focus:outline-none disabled:pointer-events-none disabled:opacity-50 disabled:bg-gray-800 disabled:text-gray-500 disabled:border-gray-800 px-4 py-2 cursor-pointer";
 
-  // Мы используем shadow-primary вместе с hover:shadow-[0_0_15px],
-  // чтобы свечение всегда принимало неоновый акцентный цвет (primary),
-  // иначе currentColor унаследует черный цвет текста кнопки и эффекта не будет.
-  const primaryStyles = "bg-primary text-background border border-transparent hover:shadow-[0_0_15px] hover:shadow-primary active:shadow-[0_0_15px] active:shadow-primary";
+  const primaryStyles = "bg-primary text-background border border-transparent font-semibold hover:shadow-[0_0_15px] hover:shadow-primary active:shadow-[0_0_15px] active:shadow-primary";
 
-  const outlineStyles = "bg-transparent border border-primary text-primary hover:bg-primary hover:text-background active:bg-primary active:text-background";
+  const outlineStyles = "bg-transparent border border-primary text-primary font-semibold hover:bg-primary hover:text-background active:bg-primary active:text-background";
 
-  const variantStyles = variant === 'primary' ? primaryStyles : outlineStyles;
+  const minimalStyles = "bg-transparent text-foreground/80 font-light hover:bg-foreground/5 hover:text-foreground active:bg-foreground/10";
+
+  const variantStyles =
+    variant === 'primary' ? primaryStyles :
+      variant === 'outline' ? outlineStyles :
+        minimalStyles;
 
   return (
     <button

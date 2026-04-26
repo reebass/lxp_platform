@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import document, chat
+from app.api.routes import document, chat, generate
 
 app = FastAPI(
     title="LXP AI Service",
@@ -23,3 +23,4 @@ async def health_check():
 
 app.include_router(document.router, tags=["Documents"])
 app.include_router(chat.router, tags=["Chat"])
+app.include_router(generate.router, prefix="/api", tags=["Generate"])

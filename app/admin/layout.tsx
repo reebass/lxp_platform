@@ -20,11 +20,7 @@ export default async function AdminLayout({
   const supabase = await createClient();
   const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-  // Детальное логирование авторизации пользователя (Debug)
-  console.log("[ADMIN GUARD] User:", user?.id, "Error:", userError);
-
   if (userError || !user) {
-    console.log("[ADMIN GUARD] No user found, redirecting...");
     redirect('/');
   }
 
@@ -35,11 +31,7 @@ export default async function AdminLayout({
     .eq('id', user.id)
     .single();
 
-  // Детальное логирование профиля из базы данных (Debug)
-  console.log("[ADMIN GUARD] Profile:", profile, "Error:", profileError);
-
   if (profile?.role !== 'superadmin') {
-    console.log("[ADMIN GUARD] Role is not superadmin, rendering GamifiedError 403...");
 
     // Используем DRY-компонент GamifiedError для отрисовки состояния 403 Forbidden.
     // Это сохраняет пользователя в системе и мягко возвращает на его законный дашборд.
